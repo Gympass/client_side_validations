@@ -2,15 +2,15 @@
 
 [![Gem Version](https://badge.fury.io/rb/client_side_validations.svg)](http://badge.fury.io/rb/client_side_validations)
 [![Build Status](https://secure.travis-ci.org/DavyJonesLocker/client_side_validations.svg?branch=master)](https://travis-ci.org/DavyJonesLocker/client_side_validations)
-[![Dependency Status](https://gemnasium.com/DavyJonesLocker/client_side_validations.svg)](https://gemnasium.com/DavyJonesLocker/client_side_validations)
+[![Dependency Status](https://gemnasium.com/badges/github.com/DavyJonesLocker/client_side_validations.svg)](https://gemnasium.com/github.com/DavyJonesLocker/client_side_validations)
 [![Code Climate](https://codeclimate.com/github/DavyJonesLocker/client_side_validations/badges/gpa.svg)](https://codeclimate.com/github/DavyJonesLocker/client_side_validations)
-[![Coverage Status](https://coveralls.io/repos/DavyJonesLocker/client_side_validations/badge.svg?branch=master)](https://coveralls.io/r/DavyJonesLocker/client_side_validations?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/DavyJonesLocker/client_side_validations/badge.svg?branch=master)](https://coveralls.io/github/DavyJonesLocker/client_side_validations?branch=master)
 
-`ClientSideValidations` made easy for your Rails 4 applications!
+`ClientSideValidations` made easy for your Rails 5 applications!
 
 ## Project Goals ##
 
-1. Follow the best practices for client side validations developed by [Luke Wroblewski](http://www.alistapart.com/articles/inline-validation-in-web-forms/)
+1. Follow the best practices for client side validations developed by [Luke Wroblewski](http://alistapart.com/article/inline-validation-in-web-forms)
 2. Automatically extract and apply validation rules defined on the
    server to the client.
 3. In the cases where a server-side validation rule would not work on
@@ -46,11 +46,12 @@ This will install the initializer:
 config/initializers/client_side_validations.rb
 ```
 
-If you want to copy the asset files from the gem into your project:
+If you need to copy the asset files from the gem into your project:
 
 ```
 rails g client_side_validations:copy_assets
 ```
+Note: If you run `copy_assets`, you will need to run it again each time you update this project.
 
 ## Initializer ##
 
@@ -70,10 +71,8 @@ There is additional support for other `ActiveModel` based ORMs and other
 Rails `FormBuilders`. Please see the [Plugin wiki page](https://github.com/DavyJonesLocker/client_side_validations/wiki/Plugins)
 (feel free to add your own)
 
-* [SimpleForm](https://github.com/DockYard/client_side_validations-simple_form)
-* [Formtastic](https://github.com/DockYard/client_side_validations-formtastic)
-* [Mongoid](https://github.com/DockYard/client_side_validations-mongoid)
-* [MongoMapper](https://github.com/DockYard/client_side_validations-mongo_mapper)
+* [SimpleForm](https://github.com/DavyJonesLocker/client_side_validations-simple_form)
+* [Mongoid](https://github.com/DavyJonesLocker/client_side_validations-mongoid)
 
 ## Usage ##
 
@@ -84,6 +83,10 @@ following to your `app/assets/javascripts/application.js` file.
 //= require rails.validations
 ```
 
+Note: If you are using [Turbolinks](https://github.com/turbolinks/turbolinks),
+make sure that `rails.validations` is required **after** `turbolinks`, so
+ClientSideValidations can properly attach its event handler.
+
 In your `FormBuilder` you only need to enable validations:
 
 ```erb
@@ -93,21 +96,6 @@ In your `FormBuilder` you only need to enable validations:
 
 That should be enough to get you going.
 
-By default the validators will be serialized and embedded in a
-`<script>` tag following the `<form>` tag. If you would like to render
-that `<script>` tag elsewhere you can do this by passing a name to
-`:validate`
-
-```erb
-<%= form_for @user, validate: :user_validators do |f| %>
-```
-
-The `<script`> tag is added to `content_for()` with the name you passed,
-so you can simply render that anywhere you like:
-
-```erb
-<%= yield(:user_validators) %>
-```
 
 ## Conditional Validators ##
 
@@ -142,7 +130,24 @@ individual validators:
 
 In the above case only the `presence` validator will be passed to the client.
 
-This is also the case with Procs, or any object that responds to `#call`
+This is also the case with [other supported conditional validations](http://guides.rubyonrails.org/v4.2.0/active_record_validations.html#conditional-validation) (such as Procs, Arrays or Strings).
+
+**NOTE:** when `:if` conditional includes a symbol or a string with
+`changed?` in it or start with `will_save_change_to`, validator will forced automatically.
+
+```ruby
+class Person < ActiveRecord::Base
+  validates :name, presence: true, if: :name_changed?
+end
+```
+
+The presence of name in the example above will be validated
+without explicit forcing.
+
+This is done because it is always assumed the value will change on the
+form.
+
+Conditionals defined with `:unless` key do not have this optimization.
 
 ### Turning off validators ###
 
@@ -165,51 +170,15 @@ You can even turn them off per fieldset:
   ...
 ```
 
-## Wrapper objects and remote validations ##
+## Understanding the client side validations data attribute ##
 
-For example, we have a wrapper class for the User model, UserForm, and it uses remote uniqueness validation for the `email` field.
+A rendered form with validations will always have a `data-client-side-validations` attribute.
 
-```ruby
-class UserForm
-  include ActiveRecord::Validations
-  attr_accessor :email
-  validates_uniqueness_of :email
-end
-...
-<% form_for(UserForm.new) do %>
-...
-```
+The objects it contains will have different keys depending upon the `FormBuilder` being used. However, `html_settings` and `validators` will always be present.
 
-However, this won't work since middleware will try to perform validation against UserForm, and it's not persisted.
+### `html_settings` ###
 
-This is solved by passing `client_validations` options hash to the validator, that currently supports one key — `:class`, and setting correct name to the form object:
-
-```ruby
-class UserForm
-  include ActiveRecord::Validations
-  attr_accessor :email
-  validates_uniqueness_of :email, client_validations: { class:
-  'User' }
-end
-...
-<% form_for(UserForm.new, as: :user) do %>
-...
-```
-
-## Understanding the embedded `<script>` tag ##
-
-A rendered form with validations will always have a `<script>` appeneded
-directly after:
-
-```html
-<script>//<![CDATA[if(window.ClientSideValidations==undefined)window.ClientSideValidations={};if(window.ClientSideValidations.forms==undefined)window.ClientSideValidations.forms={};window.ClientSideValidations.forms['new_person'] = {"type":"ActionView::Helpers::FormBuilder","input_tag":"<div class=\"field_with_errors\"><span id=\"input_tag\" /><label for=\"\" class=\"message\"></label></div>","label_tag":"<div class=\"field_with_errors\"><label id=\"label_tag\" /></div>","validators":{"person[name]":{"inclusion":[{"message":"is not included in the list","in":["Happy"]}]}}};//]]></script>
-```
-
-This script registers a new form object on `ClientSideValidations.form`. The key is equal to the ID of the form that is rendered. The objects it contains will have different keys depending upon the `FormBuilder` being used. However, `type` and `validators` will always be present.
-
-### `type` ###
-
-This will always be equal to the class of the `FormBuilder` that did the rendering. The type will be used by the JavaScript to determine how to `add` and `remove` the error messages. If you create a new `FormBuilder` you will need to write your own handlers for adding and removing.
+This will always contain the type to the class of the `FormBuilder` that did the rendering. The type will be used by the JavaScript to determine how to `add` and `remove` the error messages. If you create a new `FormBuilder`, you will need to write your own handlers for adding and removing.
 
 ### `validators` ###
 
@@ -241,7 +210,7 @@ passing nothing:
 You can also force validators similarly to the input syntax:
 
 ```erb
-<%= f.validate :email, uniqueness: false %>
+<%= f.validate :email, presence: false %>
 ```
 
 Take care when using this method. The embedded validators are
@@ -249,11 +218,11 @@ overwritten based upon the order they are rendered. So if you do
 something like:
 
 ```erb
-<%= f.text_field :email, validate: { uniqueness: false } %>
+<%= f.text_field :email, validate: { presence: false } %>
 <%= f.validate %>
 ```
 
-The `uniqueness` validator will not be turned off because the options
+The `presence` validator will not be turned off because the options
 were overwritten by the call to `FormBuilder#validate`
 
 
@@ -338,71 +307,6 @@ end
 ```
 
 Client Side Validations will apply the new validator and validate your forms as needed.
-
-### Remote Validators ###
-A good example of a remote validator would be for Zipcodes. It wouldn't be reasonable to embed every single zipcode inline, so we'll need to check for its existence with remote javascript call back to our app. Assume we have a zipcode database mapped to the model Zipcode. The primary key is the unique zipcode. Our Rails validator would probably look something like this:
-
-```ruby
-class ZipcodeValidator < ActiveModel::EachValidator
-  def validate_each(record, attr_name, value)
-    unless ::Zipcode.where(id: value).exists?
-      record.errors.add(attr_name, :zipcode, options.merge(value: value))
-    end
-  end
-end
-
-# This allows us to assign the validator in the model
-module ActiveModel::Validations::HelperMethods
-  def validates_zipcode(*attr_names)
-    validates_with ZipcodeValidator, _merge_attributes(attr_names)
-  end
-end
-```
-
-Of course we still need to add the i18n message:
-
-```yaml
-en:
-  errors:
-    messages:
-      zipcode: "Not a valid US zip code"
-```
-
-And let's add the Javascript validator. Because this will be remote validator we need to add it to `ClientSideValidations.validators.remote`:
-
-```js
-window.ClientSideValidations.validators.remote['zipcode'] = function(element, options) {
-  if ($.ajax({
-    url: '/validators/zipcode',
-    data: { id: element.val() },
-    // async *must* be false
-    async: false
-  }).status == 404) { return options.message; }
-}
-```
-
-All we're doing here is checking to see if the resource exists (in this case the given zipcode) and if it doesn't the error message is returned.
-
-Notice that the remote call is forced to *async: false*. This is necessary and the validator may not work properly if this is left out.
-
-Now the extra step for adding a remote validator is to add to the middleware. All ClientSideValidations middleware should inherit from `ClientSideValidations::Middleware::Base`:
-
-```ruby
-module ClientSideValidations::Middleware
-  class Zipcode < ClientSideValidations::Middleware::Base
-    def response
-      if ::Zipcode.where(id: request.params[:id]).exists?
-        self.status = 200
-      else
-        self.status = 404
-      end
-      super
-    end
-  end
-end
-```
-
-The `#response` method is always called and it should set the status accessor. Then a call to `super` is required. In the javascript we set the 'id' in the params to the value of the zipcode input, in the middleware we check to see if this zipcode exists in our zipcode database. If it does, we return 200, if it doesn't we return 404.
 
 ## Enabling, Disabling, and Resetting on the client ##
 
@@ -492,38 +396,28 @@ div.field_with_errors div.ui-effects-wrapper {
 
 Finally uncomment the `ActionView::Base.field_error_proc` override in `config/initializers/client_side_validations.rb`
 
-## Security ##
+## Disable validators ##
 
-Client Side Validations comes with a uniqueness middleware. This can be a potential security issue, so the uniqueness validator is disabled by default. If you want to enable it, set the `disabled_validators` config variable in `config/initializers/client_side_validations.rb`:
+If you want to disable some validators, set the `disabled_validators` config variable in `config/initializers/client_side_validations.rb`:
 
 ```ruby
-ClientSideValidations::Config.disabled_validators = []
+# Example: disable the presence validator
+ClientSideValidations::Config.disabled_validators = [:presence]
 ```
 
 Note that the `FormBuilder` will automatically skip building validators that are disabled.
 
 ## Authors ##
 
-[Brian Cardarella](http://twitter.com/bcardarella)
+[Brian Cardarella](https://twitter.com/bcardarella)
 
-[Geremia Taglialatela](http://twitter.com/gtagliala)
+[Geremia Taglialatela](https://twitter.com/gtagliala)
 
 [We are very thankful for the many contributors](https://github.com/DavyJonesLocker/client_side_validations/graphs/contributors)
 
 ## Versioning ##
 
 This gem follows [Semantic Versioning](http://semver.org)
-
-Major and minor version numbers will follow `Rails`'s major and
-minor version numbers. For example,
-`client_side_validations-4.2.0` will be compatible up to
-`~> rails-4.2.0`
-
-We will maintain compatibility with one minor version back. So the 4.2.0 version of `client_side_validations`
-will be compatible with `~> rails-4.1.0`. We will not drop support
-to older versions if not necessary.
-
-Only two versions minor versions will be actively maintained.
 
 ## Want to help? ##
 
@@ -533,8 +427,8 @@ on how to properly submit issues and pull requests.
 
 ## Legal ##
 
-[DockYard](http://dockyard.com), LLC &copy; 2012-2015
+[DockYard](https://dockyard.com/), LLC &copy; 2012-2017
 
-[@dockyard](http://twitter.com/dockyard)
+[@dockyard](https://twitter.com/dockyard)
 
-[Licensed under the MIT license](http://www.opensource.org/licenses/mit-license.php)
+[Licensed under the MIT license](https://opensource.org/licenses/mit-license.php)

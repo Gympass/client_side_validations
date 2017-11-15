@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 class PersonValidator < ActiveModel::Validator
-  def validate(record)
-  end
+  def validate(record); end
 end
 
 class Person

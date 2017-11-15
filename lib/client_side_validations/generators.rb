@@ -1,9 +1,15 @@
+# frozen_string_literal: true
+
 module ClientSideValidations
   module Generators
-    Assets = []
+    @@assets = []
 
     def self.register_assets(klass)
-      Assets.push(*klass.assets)
+      @@assets.concat(klass.assets)
+    end
+
+    def self.assets
+      @@assets
     end
   end
 end

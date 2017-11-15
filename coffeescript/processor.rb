@@ -1,4 +1,6 @@
-$:.unshift(File.expand_path('../../lib', __FILE__))
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
 
 require 'client_side_validations/version'
 require 'coffee_script'

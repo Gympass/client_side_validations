@@ -1,7 +1,9 @@
-module ClientSideValidations::ActiveModel
-  module Exclusion
+# frozen_string_literal: true
 
-    include EnumerableValidator
-
+module ClientSideValidations
+  module ActiveModel
+    module Exclusion
+      include EnumerableValidator
+    end
   end
 end

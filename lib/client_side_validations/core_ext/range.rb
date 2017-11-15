@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class Range
-  def as_json(options = nil)
+  def as_json(*)
     [first, last]
   end
 

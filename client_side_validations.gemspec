@@ -1,42 +1,44 @@
-# -*- encoding: utf-8 -*-
-$:.push File.expand_path("../lib", __FILE__)
-require "client_side_validations/version"
+# frozen_string_literal: true
 
-Gem::Specification.new do |s|
-  s.name        = "client_side_validations"
-  s.version     = ClientSideValidations::VERSION
-  s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Brian Cardarella"]
-  s.email       = ["bcardarella@gmail.com"]
-  s.homepage    = "https://github.com/DavyJonesLocker/client_side_validations"
-  s.summary     = %q{Client Side Validations}
-  s.description = %q{Client Side Validations made easy for your Rails 4 applications}
-  s.license     = 'MIT'
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'client_side_validations/version'
 
-  s.files         = `git ls-files -- {lib/*,vendor/*,*.gemspec}`.split("\n")
-  s.require_paths = ["lib"]
+Gem::Specification.new do |spec|
+  spec.name          = 'client_side_validations'
+  spec.version       = ClientSideValidations::VERSION
+  spec.authors       = ['Geremia Taglialatela', 'Brian Cardarella']
+  spec.email         = ['tagliala.dev@gmail.com', 'bcardarella@gmail.com']
 
-  s.add_dependency 'rails', '>= 4.0.0', '< 4.3.0'
-  s.add_dependency 'jquery-rails', '>= 3.1.2', '< 5.0.0'
+  spec.summary       = 'Client Side Validations'
+  spec.description   = 'Client Side Validations made easy for your Rails 5 applications'
+  spec.homepage      = 'https://github.com/DavyJonesLocker/client_side_validations'
+  spec.license       = 'MIT'
 
-  s.add_development_dependency 'appraisal', '~> 2.0'
-  s.add_development_dependency 'coveralls', '~> 0.8.1'
-  s.add_development_dependency 'm', '~> 1.3'
-  s.add_development_dependency 'minitest', '>= 4.7.5', '< 6.0.0'
-  s.add_development_dependency 'mocha', '~> 1.1'
-  s.add_development_dependency 'simplecov', '~> 0.10.0'
-  s.add_development_dependency 'sqlite3', '~> 1.3'
+  spec.platform      = Gem::Platform::RUBY
 
-  if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.0')
-    s.add_development_dependency 'byebug', '~> 5.0'
-  else
-    s.add_development_dependency 'debugger', '~> 1.6'
-  end
+  spec.files         = `git ls-files -z -- {CHANGELOG.md,LICENSE.md,README.md,lib,vendor}`.split("\x0")
+  spec.require_paths = ['lib']
+
+  spec.add_dependency 'rails', '>= 5.0.0.1', '< 5.2'
+
+  spec.add_dependency 'jquery-rails', '~> 4.3'
+  spec.add_dependency 'js_regex', '~> 2.1'
+
+  spec.add_development_dependency 'appraisal', '~> 2.2'
+  spec.add_development_dependency 'byebug', '~> 9.1'
+  spec.add_development_dependency 'coveralls_reborn', '~> 0.9.0'
+  spec.add_development_dependency 'm', '~> 1.5'
+  spec.add_development_dependency 'minitest', '~> 5.10'
+  spec.add_development_dependency 'mocha', '~> 1.3'
+  spec.add_development_dependency 'rake', '~> 12.2'
+  spec.add_development_dependency 'rubocop', '~> 0.51.0'
+  spec.add_development_dependency 'simplecov', '~> 0.15.1'
+  spec.add_development_dependency 'sqlite3', '~> 1.3'
 
   # For QUnit testing
-  s.add_development_dependency 'sinatra', '~> 1.4'
-  s.add_development_dependency 'shotgun', '~> 0.9'
-  s.add_development_dependency 'thin', '~> 1.6'
-  s.add_development_dependency 'json', '~> 1.8'
-  s.add_development_dependency 'coffee-script', '~> 2.4'
+  spec.add_development_dependency 'coffee-script', '~> 2.4'
+  spec.add_development_dependency 'shotgun', '~> 0.9.2'
+  spec.add_development_dependency 'sinatra', '~> 2.0'
+  spec.add_development_dependency 'thin', '~> 1.7'
 end
